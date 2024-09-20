@@ -1,0 +1,97 @@
+#include <VarSpeedServo.h> 
+VarSpeedServo servo1; 
+VarSpeedServo servo2;
+String inputString = "";  // Chuỗi để giữ dữ liệu nhận được
+unsigned int cont = 0;
+bool is_auto = true;      // Biến để lưu trạng thái chế độ auto
+
+void setup() 
+{
+  servo1.attach(9);
+  servo2.attach(10);
+  
+  Serial.begin(250000);
+  Serial.println("Ready");
+}
+
+void loop() 
+{
+  signed int vel;
+  unsigned int pos;
+  
+  if (Serial.available()) 
+  {
+    inputString = Serial.readStringUntil('!');
+    
+    if (inputString.endsWith("x"))  // Điều khiển servo 1 theo trục X
+    {
+      vel = inputString.toInt();   
+      if (vel > 2)
+        servo1.write(180, vel, false);    
+      else if (vel < -2)
+        servo1.write(0, -vel, false);    
+      else
+      {
+        pos = servo1.read();
+        servo1.write(pos, 255, false);       
+      } 
+    }
+    else if (inputString.endsWith("y"))  // Điều khiển servo 2 theo trục Y
+    {
+      vel = inputString.toInt();   
+      if (vel > 2)
+        servo2.write(180, vel, false);    
+      else if (vel < -2)
+        servo2.write(0, -vel, false);    
+      else
+      {
+        pos = servo2.read();
+        servo2.write(pos, 255, false);       
+      } 
+    }
+    else if (inputString.endsWith("o"))  // Kích hoạt chế độ 'auto'
+    {
+      cont++;
+      is_auto = true;
+      if (cont >= 100)
+      {
+        servo1.write(90, 20, true);
+        servo2.write(70, 20, true);
+        cont = 0;
+      }
+      else
+      {
+        pos = servo1.read();
+        servo1.write(pos, 255, false);
+        pos = servo2.read();
+        servo2.write(pos, 255, false);
+      }
+    }
+    else if (inputString == "u")  // Điều khiển lên (servo 2)
+    {
+      is_auto = false;
+      pos = servo2.read();
+      servo2.write(pos - 10, 30, false);  // Di chuyển lên
+    }
+    else if (inputString == "d")  // Điều khiển xuống (servo 2)
+    {
+      is_auto = false;
+      pos = servo2.read();
+      servo2.write(pos + 10, 30, false);  // Di chuyển xuống
+    }
+    else if (inputString == "l")  // Điều khiển trái (servo 1)
+    {
+      is_auto = false;
+      pos = servo1.read();
+      servo1.write(pos - 10, 30, false);  // Di chuyển trái
+    }
+    else if (inputString == "r")  // Điều khiển phải (servo 1)
+    {
+      is_auto = false;
+      pos = servo1.read();
+      servo1.write(pos + 10, 30, false);  // Di chuyển phải
+    }
+
+    inputString = "";  // Xóa chuỗi để tiếp nhận lệnh mới
+  }
+}
